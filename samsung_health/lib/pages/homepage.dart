@@ -13,63 +13,106 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  double screenHeight(BuildContext context) =>
+      MediaQuery.of(context).size.height;
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: Stack(
-        children: <Widget>[
-          Align(
-            alignment: Alignment.bottomRight,
-            child: FloatingActionButton(
-              heroTag: 'Second Page',
-              onPressed: () {
-                log('Navigating to Second Page');
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (BuildContext context) => const SecondPage(),
+      backgroundColor: Colors.black,
+      body: Column(
+        children: [
+          Expanded(
+            child: CustomScrollView(
+              slivers: <Widget>[
+                const SliverAppBar(
+                  backgroundColor: Colors.black,
+                  floating: false,
+                  pinned: true,
+                  snap: false,
+                  expandedHeight: 300.0,
+                  title: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Text(
+                      'SAMSUNG Health',
+                      style: TextStyle(color: Colors.white, fontSize: 32.0),
+                    ),
                   ),
-                );
-              },
-              tooltip: 'Second Page',
-              child: const Icon(Icons.arrow_forward),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: FloatingActionButton(
-              heroTag: 'Increment',
-              onPressed: _incrementCounter,
-              tooltip: 'Increment',
-              child: const Icon(Icons.add),
+                ),
+                SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8.0, horizontal: 16.0),
+                          child: Container(
+                          decoration: const BoxDecoration(
+                            color: Color.fromRGBO(33, 33, 33, 70),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(20.0)),
+                          ),
+                          child: ListTile(
+                            title: Text('Item $index'),
+                            textColor: Colors.white,
+                          ),
+                        ),
+                        ),
+                      ],
+                    );
+                  },
+                  childCount: 30,
+                )),
+              ],
             ),
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.black,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Align(
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.home),
+                onPressed: () {},
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {},
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.more_vert),
+                onPressed: () {},
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () {
+                  log('Navigating to Second Page');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) => const SecondPage(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
