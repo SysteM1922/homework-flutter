@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gallery/pages/homepage.dart';
+import 'package:gallery/app.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,11 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Gallery',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(),
+      home: const App(),
     );
   }
 }

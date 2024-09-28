@@ -2,17 +2,16 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:gallery/pages/album_page.dart';
 
-import 'package:gallery/widgets/bottombar.dart';
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class AlbumsPage extends StatefulWidget {
+  const AlbumsPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AlbumsPage> createState() => _AlbumsPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _AlbumsPageState extends State<AlbumsPage> {
   bool _firstLoad = true;
   int _axisIndex = 0;
   int _maxAxisCount = 4;
@@ -152,8 +151,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     snap: false,
                     expandedHeight: _expandedHeight,
                     flexibleSpace: FlexibleSpaceBar(
-                      title: Text("Albums",
-                          style: TextStyle(color: Colors.white)),
+                      title:
+                          Text("Albums", style: TextStyle(color: Colors.white)),
                       titlePadding: const EdgeInsets.only(bottom: 100.0),
                       centerTitle: true,
                     ),
@@ -164,58 +163,77 @@ class _MyHomePageState extends State<MyHomePage> {
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
                           if (_axisCount == 1) {
-                            return Container(
-                                color: Colors.black,
-                                margin: const EdgeInsets.all(5.0),
-                                child: Row(children: [
-                                  Flex(
-                                    direction: Axis.horizontal,
+                            return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              AlbumPage(name: 'Album $index')));
+                                },
+                                child: Container(
+                                    color: Colors.black,
+                                    margin: const EdgeInsets.all(5.0),
+                                    child: Row(children: [
+                                      Flex(
+                                        direction: Axis.horizontal,
+                                        children: [
+                                          AspectRatio(
+                                              aspectRatio: 1.0,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[300],
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          20.0),
+                                                ),
+                                              )),
+                                        ],
+                                      ),
+                                      Container(
+                                        margin:
+                                            const EdgeInsets.only(left: 20.0),
+                                        child: Text(
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                            'Album $index'),
+                                      ),
+                                    ])));
+                          } else {
+                            return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              AlbumPage(name: 'Album $index')));
+                                },
+                                child: Container(
+                                  color: Colors.black,
+                                  margin: const EdgeInsets.all(5.0),
+                                  child: Column(
                                     children: [
                                       AspectRatio(
-                                          aspectRatio: 1.0,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[300],
-                                              borderRadius:
-                                                  BorderRadius.circular(20.0),
-                                            ),
-                                          )),
+                                        aspectRatio: 1.0,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[300],
+                                            borderRadius:
+                                                BorderRadius.circular(20.0),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 5.0),
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          'Album $index',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 20.0),
-                                    child: Text(
-                                        style: TextStyle(color: Colors.white),
-                                        'Album $index'),
-                                  ),
-                                ]));
-                          } else {
-                            return Container(
-                              color: Colors.black,
-                              margin: const EdgeInsets.all(5.0),
-                              child: Column(
-                                children: [
-                                  AspectRatio(
-                                    aspectRatio: 1.0,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[300],
-                                        borderRadius:
-                                            BorderRadius.circular(20.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 5.0),
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'Album $index',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
+                                ));
                           }
                         },
                         childCount: 9,
@@ -234,7 +252,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      bottomNavigationBar: const BottomBar(),
     );
   }
 }
