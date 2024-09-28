@@ -1,115 +1,240 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:gallery/pages/secondpage.dart';
+import 'package:flutter/rendering.dart';
+
+import 'package:gallery/widgets/bottombar.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool _firstLoad = true;
+  int _axisIndex = 0;
+  int _maxAxisCount = 4;
+  int _minAxisCount = 2;
+  int _axisCount = 2;
+  double _expandedHeight = 300.0;
+  double _scale = 1.0;
+  double _childAspectRatio = 0.8;
+
+  bool _pinned = true;
+
+  final ScrollController _scrollController = ScrollController(
+    keepScrollOffset: true,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.position.userScrollDirection ==
+          ScrollDirection.reverse) {
+        setState(() {
+          _pinned = false;
+        });
+      }
+      if (_scrollController.position.userScrollDirection ==
+          ScrollDirection.forward) {
+        setState(() {
+          _pinned = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).orientation == Orientation.landscape) {
+      // horizontal
+      setState(() {
+        _maxAxisCount = 6;
+        _minAxisCount = 4;
+        _expandedHeight = 0.0;
+
+        if (_firstLoad) {
+          _axisCount = _axisIndex + _minAxisCount;
+          _firstLoad = false;
+        } else {
+          if (_axisCount != 1) {
+            _axisCount = _minAxisCount + _axisIndex;
+            _childAspectRatio = 0.8;
+          } else {
+            _childAspectRatio = (1 / .1);
+          }
+        }
+      });
+    } else {
+      // vertical
+      setState(() {
+        _maxAxisCount = 4;
+        _minAxisCount = 2;
+        _expandedHeight = MediaQuery.of(context).size.height / 3;
+
+        if (_firstLoad) {
+          _axisCount = _minAxisCount + _axisIndex;
+          _firstLoad = false;
+        } else {
+          if (_axisCount != 1) {
+            _axisCount = _minAxisCount + _axisIndex;
+            _childAspectRatio = 0.8;
+          } else {
+            _childAspectRatio = (1 / .2);
+          }
+        }
+      });
+    }
+  }
+
+  void _updateAxisCount(double scale) {
+    if (scale < 1.0) {
+      // zoom out
+      log('Zoom out');
+      setState(() {
+        if (_axisCount != 1 && _axisCount < _maxAxisCount) {
+          _axisIndex = _axisIndex + 1;
+          _axisCount = _minAxisCount + _axisIndex;
+        }
+        if (_axisCount == _maxAxisCount || _axisCount == 1) {
+          _axisCount = 1;
+          if (MediaQuery.of(context).orientation == Orientation.portrait) {
+            _childAspectRatio = (1 / .2);
+          } else {
+            _childAspectRatio = (1 / .1);
+          }
+        }
+      });
+    } else if (scale > 1.0) {
+      // zoom in
+      log('Zoom in');
+      setState(() {
+        _childAspectRatio = 0.8;
+        if (_axisCount == 1) {
+          _axisIndex = _axisIndex - 1;
+          _axisCount = _minAxisCount + _axisIndex;
+        } else if (_axisCount > _minAxisCount) {
+          _axisIndex = _axisIndex - 1;
+          _axisCount = _minAxisCount + _axisIndex;
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              slivers: <Widget>[
-                const SliverAppBar(
-                  backgroundColor: Colors.black,
-                  floating: false,
-                  pinned: true,
-                  snap: false,
-                  expandedHeight: 300.0,
-                  title: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Text(
-                      'Albums',
-                      style: TextStyle(color: Colors.white, fontSize: 32.0),
+      body: GestureDetector(
+        onScaleUpdate: (details) {
+          setState(() {
+            _scale = details.scale;
+          });
+        },
+        onScaleEnd: (details) {
+          _updateAxisCount(_scale);
+        },
+        child: Column(
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                controller: _scrollController,
+                slivers: <Widget>[
+                  SliverAppBar(
+                    backgroundColor: Colors.black,
+                    floating: false,
+                    pinned: _pinned,
+                    snap: false,
+                    expandedHeight: _expandedHeight,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Text("Albums",
+                          style: TextStyle(color: Colors.white)),
+                      titlePadding: const EdgeInsets.only(bottom: 100.0),
+                      centerTitle: true,
                     ),
                   ),
-                ),
-                SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
-                    return Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 8.0, horizontal: 16.0),
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: Color.fromRGBO(33, 33, 33, 70),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(20.0)),
-                            ),
-                            child: ListTile(
-                              title: Text('Item $index'),
-                              textColor: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                  childCount: 30,
-                )),
-              ],
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.black,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Align(
-              alignment: Alignment.center,
-              child: IconButton(
-                icon: const Icon(Icons.home),
-                onPressed: () {},
-              ),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {},
-              ),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: IconButton(
-                icon: const Icon(Icons.more_vert),
-                onPressed: () {},
-              ),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  log('Navigating to Second Page');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) => const SecondPage(),
+                  SliverPadding(
+                    padding: const EdgeInsets.all(10.0),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          if (_axisCount == 1) {
+                            return Container(
+                                color: Colors.black,
+                                margin: const EdgeInsets.all(5.0),
+                                child: Row(children: [
+                                  Flex(
+                                    direction: Axis.horizontal,
+                                    children: [
+                                      AspectRatio(
+                                          aspectRatio: 1.0,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(20.0),
+                                            ),
+                                          )),
+                                    ],
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 20.0),
+                                    child: Text(
+                                        style: TextStyle(color: Colors.white),
+                                        'Album $index'),
+                                  ),
+                                ]));
+                          } else {
+                            return Container(
+                              color: Colors.black,
+                              margin: const EdgeInsets.all(5.0),
+                              child: Column(
+                                children: [
+                                  AspectRatio(
+                                    aspectRatio: 1.0,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[300],
+                                        borderRadius:
+                                            BorderRadius.circular(20.0),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 5.0),
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Album $index',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        },
+                        childCount: 9,
+                      ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _axisCount,
+                        crossAxisSpacing: 0.0,
+                        mainAxisSpacing: 0.0,
+                        childAspectRatio: _childAspectRatio,
+                      ),
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
+      bottomNavigationBar: const BottomBar(),
     );
   }
 }

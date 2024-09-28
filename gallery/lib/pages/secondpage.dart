@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:gallery/widgets/bottombar.dart';
+
 class SecondPage extends StatefulWidget {
   const SecondPage({super.key});
 
@@ -27,6 +29,7 @@ class _SecondPageState extends State<SecondPage> {
           ],
         ),
       ),
+      bottomNavigationBar: const BottomBar(),
     );
   }
 }
