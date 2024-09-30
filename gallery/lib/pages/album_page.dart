@@ -97,10 +97,10 @@ class _AlbumPageState extends State<AlbumPage> {
   void initState() {
     super.initState();
 
-    _getMedia();
-
     album = widget.album;
     totalMedia = widget.albumSize;
+
+    _getMedia();
 
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
