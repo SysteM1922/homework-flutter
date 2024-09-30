@@ -16,6 +16,7 @@ class AlbumPage extends StatefulWidget {
 }
 
 class _AlbumPageState extends State<AlbumPage> {
+
   int _axisCount = 3;
   int _axisIndex = 2;
   double _expandedHeight = 300.0;
@@ -37,6 +38,10 @@ class _AlbumPageState extends State<AlbumPage> {
   List<AssetEntityImage> newMedia = [];
   List<AssetEntity> mediaList = [];
 
+  int totalMedia = 0;
+
+  AssetPathEntity album = AssetPathEntity(id: "none", name: "none");
+
   bool _getMediaLock = false;
 
   double _cacheExtent = 2000.0;
@@ -48,7 +53,7 @@ class _AlbumPageState extends State<AlbumPage> {
       _getMediaLock = true;
     }
 
-    if (range >= widget.albumSize) {
+    if (range >= totalMedia) {
       return;
     }
 
@@ -59,7 +64,7 @@ class _AlbumPageState extends State<AlbumPage> {
           start: range, end: range + pageSize[_axisIndex] + 50);
       range = range + pageSize[_axisIndex] * 2;
     } else {
-      mediaList = await widget.album
+      mediaList = await album
           .getAssetListRange(start: range, end: range + pageSize[_axisIndex]);
     }
 
@@ -93,6 +98,9 @@ class _AlbumPageState extends State<AlbumPage> {
     super.initState();
 
     _getMedia();
+
+    album = widget.album;
+    totalMedia = widget.albumSize;
 
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
@@ -193,7 +201,7 @@ class _AlbumPageState extends State<AlbumPage> {
                     snap: false,
                     expandedHeight: _expandedHeight,
                     flexibleSpace: FlexibleSpaceBar(
-                      title: Text(widget.album.name,
+                      title: Text(album.name,
                           style: TextStyle(color: Colors.white)),
                       titlePadding: const EdgeInsets.only(bottom: 100.0),
                       centerTitle: true,
@@ -203,6 +211,7 @@ class _AlbumPageState extends State<AlbumPage> {
                     padding: const EdgeInsets.all(10.0),
                     sliver: SliverGrid(
                       delegate: SliverChildBuilderDelegate(
+                        addRepaintBoundaries: false,
                         (BuildContext context, int index) {
                           return Container(
                               margin: EdgeInsets.all(_margin),
