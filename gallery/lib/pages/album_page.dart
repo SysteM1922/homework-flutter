@@ -2,29 +2,87 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 
 class AlbumPage extends StatefulWidget {
+  final AssetPathEntity album;
+  final int albumSize;
 
-  final String name;
-
-  const AlbumPage({super.key, required this.name});
+  const AlbumPage({super.key, required this.album, required this.albumSize});
 
   @override
   State<AlbumPage> createState() => _AlbumPageState();
 }
 
 class _AlbumPageState extends State<AlbumPage> {
-
   int _axisCount = 3;
   int _axisIndex = 2;
   double _expandedHeight = 300.0;
   double _scale = 1.0;
   double _margin = 2.0;
+  int range = 0;
 
-  List states = [1, 2, 3, 4, 7, 15];
-  List margins = [3.0, 3.0, 3.0, 2.0, 1.0, 0.0];
+  double _borderWidth = 0.5;
+  Color _fillColor = Color.fromRGBO(128, 128, 128, 0.2);
+  Color _borderColor = Color.fromRGBO(128, 128, 128, 0.61);
+
+  List<int> states = [1, 2, 3, 4, 7, 15];
+  List<double> margins = [3.0, 3.0, 3.0, 2.0, 1.0, 0.0];
+  List<int> pageSize = [10, 20, 42, 80, 119, 210];
 
   bool _pinned = true;
+
+  List<AssetEntityImage> media = [];
+  List<AssetEntityImage> newMedia = [];
+  List<AssetEntity> mediaList = [];
+
+  bool _getMediaLock = false;
+
+  double _cacheExtent = 2000.0;
+
+  void _getMedia() async {
+    if (_getMediaLock) {
+      return;
+    } else {
+      _getMediaLock = true;
+    }
+
+    if (range >= widget.albumSize) {
+      return;
+    }
+
+    log('Getting media from $range to ${range + pageSize[_axisIndex]}');
+
+    if (range == 0) {
+      mediaList = await widget.album.getAssetListRange(
+          start: range, end: range + pageSize[_axisIndex] + 50);
+      range = range + pageSize[_axisIndex] * 2;
+    } else {
+      mediaList = await widget.album
+          .getAssetListRange(start: range, end: range + pageSize[_axisIndex]);
+    }
+
+    for (var asset in mediaList) {
+      newMedia.add(AssetEntityImage(
+        asset,
+        fit: BoxFit.cover,
+        isOriginal: false,
+      ));
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      media.addAll(newMedia);
+      newMedia.clear();
+      mediaList.clear();
+      range = range + pageSize[_axisIndex];
+      _getMediaLock = false;
+    });
+  }
 
   final ScrollController _scrollController = ScrollController(
     keepScrollOffset: true,
@@ -33,14 +91,17 @@ class _AlbumPageState extends State<AlbumPage> {
   @override
   void initState() {
     super.initState();
+
+    _getMedia();
+
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
           ScrollDirection.reverse) {
         setState(() {
           _pinned = false;
         });
-      }
-      if (_scrollController.position.userScrollDirection ==
+        _getMedia();
+      } else if (_scrollController.position.userScrollDirection ==
           ScrollDirection.forward) {
         setState(() {
           _pinned = true;
@@ -64,6 +125,18 @@ class _AlbumPageState extends State<AlbumPage> {
         _expandedHeight = MediaQuery.of(context).size.height / 3;
         _axisCount = states[_axisIndex];
       });
+    }
+
+    if (_axisIndex == 5) {
+      _borderWidth = 0.0;
+      _fillColor = Colors.transparent;
+      _borderColor = Colors.transparent;
+      _cacheExtent = 0.0;
+    } else {
+      _borderWidth = 0.5;
+      _fillColor = Color.fromRGBO(128, 128, 128, 0.2);
+      _borderColor = Color.fromRGBO(128, 128, 128, 0.61);
+      _cacheExtent = 2000.0;
     }
   }
 
@@ -108,6 +181,7 @@ class _AlbumPageState extends State<AlbumPage> {
           children: [
             Expanded(
               child: CustomScrollView(
+                cacheExtent: _cacheExtent,
                 physics: const BouncingScrollPhysics(),
                 controller: _scrollController,
                 slivers: <Widget>[
@@ -119,8 +193,8 @@ class _AlbumPageState extends State<AlbumPage> {
                     snap: false,
                     expandedHeight: _expandedHeight,
                     flexibleSpace: FlexibleSpaceBar(
-                      title:
-                          Text(widget.name, style: TextStyle(color: Colors.white)),
+                      title: Text(widget.album.name,
+                          style: TextStyle(color: Colors.white)),
                       titlePadding: const EdgeInsets.only(bottom: 100.0),
                       centerTitle: true,
                     ),
@@ -131,15 +205,18 @@ class _AlbumPageState extends State<AlbumPage> {
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
                           return Container(
-                            margin: EdgeInsets.all(_margin),
-                            child: Container(
+                              margin: EdgeInsets.all(_margin),
                               decoration: BoxDecoration(
-                                color: Colors.grey[300],
+                                color: _fillColor,
+                                border: Border.all(
+                                  color: _borderColor,
+                                  width: _borderWidth,
+                                ),
                               ),
-                            ),
-                          );
+                              child:
+                                  (index < media.length) ? media[index] : null);
                         },
-                        childCount: 200,
+                        childCount: media.length,
                       ),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: _axisCount,

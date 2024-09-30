@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:gallery/pages/album_page.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 
 class AlbumsPage extends StatefulWidget {
   const AlbumsPage({super.key});
@@ -23,25 +25,77 @@ class _AlbumsPageState extends State<AlbumsPage> {
 
   bool _pinned = true;
 
+  List<AssetPathEntity> albums = [];
+  List<AssetEntityImage> albumCovers = [];
+  List<int> albumSizes = [];
+
   final ScrollController _scrollController = ScrollController(
     keepScrollOffset: true,
   );
 
+  void _getAlbumSize(int index) async {
+    int size = await albums[index].assetCountAsync;
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      albumSizes[index] = size;
+    });
+  }
+
+  void _getMedia() async {
+    albums = await PhotoManager.getAssetPathList(
+      type: RequestType.image,
+      hasAll: false,
+      onlyAll: false,
+    );
+
+    albums.sort((a, b) => a.name.compareTo(b.name.toUpperCase()));
+
+    for (final AssetPathEntity album in albums) {
+      List<AssetEntity> media = await album.getAssetListRange(
+        start: 0,
+        end: 1,
+      );
+
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        albumCovers.add(AssetEntityImage(
+          media[0],
+          fit: BoxFit.cover,
+          isOriginal: true,
+        ));
+        albumSizes.add(0);
+      });
+
+      _getAlbumSize(albums.indexOf(album));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+
+    _getMedia();
+
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
           ScrollDirection.reverse) {
-        setState(() {
-          _pinned = false;
-        });
-      }
-      if (_scrollController.position.userScrollDirection ==
+        if (_pinned) {
+          setState(() {
+            _pinned = false;
+          });
+        }
+      } else if (_scrollController.position.userScrollDirection ==
           ScrollDirection.forward) {
-        setState(() {
-          _pinned = true;
-        });
+        if (!_pinned) {
+          setState(() {
+            _pinned = true;
+          });
+        }
       }
     });
   }
@@ -141,6 +195,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
           children: [
             Expanded(
               child: CustomScrollView(
+                cacheExtent: 10000.0,
                 physics: const BouncingScrollPhysics(),
                 controller: _scrollController,
                 slivers: <Widget>[
@@ -161,6 +216,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
                     padding: const EdgeInsets.all(10.0),
                     sliver: SliverGrid(
                       delegate: SliverChildBuilderDelegate(
+                        addRepaintBoundaries: false,
                         (BuildContext context, int index) {
                           if (_axisCount == 1) {
                             return GestureDetector(
@@ -168,35 +224,67 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) =>
-                                              AlbumPage(name: 'Album $index')));
+                                          builder: (context) => AlbumPage(
+                                                album: albums[index],
+                                                albumSize: albumSizes[index],
+                                              )));
                                 },
-                                child: Container(
-                                    color: Colors.black,
-                                    margin: const EdgeInsets.all(5.0),
+                                child: Padding(
+                                    padding: const EdgeInsets.all(5.0),
                                     child: Row(children: [
                                       Flex(
                                         direction: Axis.horizontal,
                                         children: [
                                           AspectRatio(
-                                              aspectRatio: 1.0,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey[300],
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          20.0),
+                                            aspectRatio: 1.0,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: Color.fromRGBO(
+                                                      128, 128, 128, 0.61),
+                                                  width: 1.0,
                                                 ),
-                                              )),
+                                                borderRadius:
+                                                    BorderRadius.circular(20.0),
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(20.0),
+                                                child:
+                                                    index < albumCovers.length
+                                                        ? albumCovers[index]
+                                                        : null,
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                       Container(
                                         margin:
                                             const EdgeInsets.only(left: 20.0),
-                                        child: Text(
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                            'Album $index'),
+                                        child: Flex(
+                                          direction: Axis.vertical,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              albums[index].name,
+                                              textAlign: TextAlign.left,
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                            Text(
+                                              '${index < albumSizes.length ? albumSizes[index] : 0}',
+                                              textAlign: TextAlign.left,
+                                              style: TextStyle(
+                                                color: Color.fromRGBO(
+                                                    128, 128, 128, 1),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ])));
                           } else {
@@ -205,38 +293,69 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) =>
-                                              AlbumPage(name: 'Album $index')));
+                                          builder: (context) => AlbumPage(
+                                              album: albums[index],
+                                              albumSize: albumSizes[index])));
                                 },
-                                child: Container(
-                                  color: Colors.black,
-                                  margin: const EdgeInsets.all(5.0),
-                                  child: Column(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: Flex(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    direction: Axis.vertical,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       AspectRatio(
-                                        aspectRatio: 1.0,
+                                        aspectRatio: 1,
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.grey[300],
+                                            border: Border.all(
+                                              color: Color.fromRGBO(
+                                                  128, 128, 128, 0.61),
+                                              width: 1.0,
+                                            ),
                                             borderRadius:
                                                 BorderRadius.circular(20.0),
                                           ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(20.0),
+                                            child: index < albumCovers.length
+                                                ? albumCovers[index]
+                                                : null,
+                                          ),
                                         ),
                                       ),
-                                      Container(
-                                        margin: const EdgeInsets.only(top: 5.0),
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          'Album $index',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ),
+                                      Flex(
+                                        direction: Axis.vertical,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            albums[index].name,
+                                            textAlign: TextAlign.left,
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                          Text(
+                                            '${index < albumSizes.length ? albumSizes[index] : 0}',
+                                            textAlign: TextAlign.left,
+                                            style: TextStyle(
+                                              color: Color.fromRGBO(
+                                                  128, 128, 128, 1),
+                                            ),
+                                          ),
+                                        ],
+                                      )
                                     ],
                                   ),
                                 ));
                           }
                         },
-                        childCount: 9,
+                        childCount: albums.length,
                       ),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: _axisCount,

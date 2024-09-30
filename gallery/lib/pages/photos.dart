@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
@@ -31,21 +32,20 @@ class _PhotosPageState extends State<PhotosPage> {
 
   bool _pinned = true;
 
-  int totalMedia = 0;
-
   List<AssetEntityImage> media = [];
   List<AssetEntityImage> newMedia = [];
-
   List<AssetEntity> mediaList = [];
+
+  int totalMedia = 0;
 
   AssetPathEntity? recent = AssetPathEntity(id: "none", name: "none");
 
   bool _getMediaLock = false;
 
+  double _cacheExtent = 2000.0;
+
   void _getTotalAssets() async {
     totalMedia = await recent!.assetCountAsync;
-
-    log('Total media: $totalMedia');
   }
 
   void _getMedia() async {
@@ -53,6 +53,10 @@ class _PhotosPageState extends State<PhotosPage> {
       return;
     } else {
       _getMediaLock = true;
+    }
+
+    if (totalMedia != 0 && range >= totalMedia) {
+      return;
     }
 
     log('Getting media from $range to ${range + pageSize[_axisIndex]}');
@@ -74,6 +78,10 @@ class _PhotosPageState extends State<PhotosPage> {
       ));
     }
 
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       media.addAll(newMedia);
       newMedia.clear();
@@ -85,6 +93,7 @@ class _PhotosPageState extends State<PhotosPage> {
 
   void _getAlbums() async {
     final List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
+      type: RequestType.image,
       hasAll: true,
       onlyAll: true,
     );
@@ -94,7 +103,6 @@ class _PhotosPageState extends State<PhotosPage> {
     });
 
     _getTotalAssets();
-
     _getMedia();
   }
 
@@ -111,15 +119,19 @@ class _PhotosPageState extends State<PhotosPage> {
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
           ScrollDirection.reverse) {
-        setState(() {
-          _pinned = false;
-        });
+        if (_pinned) {
+          setState(() {
+            _pinned = false;
+          });
+        }
         _getMedia();
       } else if (_scrollController.position.userScrollDirection ==
           ScrollDirection.forward) {
-        setState(() {
-          _pinned = true;
-        });
+        if (!_pinned) {
+          setState(() {
+            _pinned = true;
+          });
+        }
       }
     });
   }
@@ -145,10 +157,12 @@ class _PhotosPageState extends State<PhotosPage> {
       _borderWidth = 0.0;
       _fillColor = Colors.transparent;
       _borderColor = Colors.transparent;
+      _cacheExtent = 0.0;
     } else {
       _borderWidth = 0.5;
       _fillColor = Color.fromRGBO(128, 128, 128, 0.2);
       _borderColor = Color.fromRGBO(128, 128, 128, 0.61);
+      _cacheExtent = 2000.0;
     }
   }
 
@@ -179,7 +193,6 @@ class _PhotosPageState extends State<PhotosPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
@@ -195,6 +208,7 @@ class _PhotosPageState extends State<PhotosPage> {
           children: [
             Expanded(
               child: CustomScrollView(
+                cacheExtent: _cacheExtent,
                 physics: const BouncingScrollPhysics(),
                 controller: _scrollController,
                 slivers: <Widget>[
@@ -218,16 +232,16 @@ class _PhotosPageState extends State<PhotosPage> {
                         addRepaintBoundaries: false,
                         (BuildContext context, int index) {
                           return Container(
-                            margin: EdgeInsets.all(_margin),
-                            decoration: BoxDecoration(
-                              color: _fillColor,
-                              border: Border.all(
-                                color:_borderColor,
-                                width: _borderWidth,
+                              margin: EdgeInsets.all(_margin),
+                              decoration: BoxDecoration(
+                                color: _fillColor,
+                                border: Border.all(
+                                  color: _borderColor,
+                                  width: _borderWidth,
+                                ),
                               ),
-                            ),
-                            child: (index < media.length) ? media[index] : null
-                          );
+                              child:
+                                  (index < media.length) ? media[index] : null);
                         },
                         childCount: media.length,
                       ),
