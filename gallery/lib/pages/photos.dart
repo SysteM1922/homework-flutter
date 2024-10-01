@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
+import 'package:gallery/pages/image.dart';
 
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
@@ -35,6 +35,7 @@ class _PhotosPageState extends State<PhotosPage> {
   List<AssetEntityImage> media = [];
   List<AssetEntityImage> newMedia = [];
   List<AssetEntity> mediaList = [];
+  List<AssetEntity> newMediaList = [];
 
   int totalMedia = 0;
 
@@ -56,21 +57,22 @@ class _PhotosPageState extends State<PhotosPage> {
     }
 
     if (totalMedia != 0 && range >= totalMedia) {
+      _getMediaLock = false;
       return;
     }
 
     log('Getting media from $range to ${range + pageSize[_axisIndex]}');
 
     if (range == 0) {
-      mediaList = await recent!.getAssetListRange(
+      newMediaList = await recent!.getAssetListRange(
           start: range, end: range + pageSize[_axisIndex] + 50);
       range = range + pageSize[_axisIndex] * 2;
     } else {
-      mediaList = await recent!
+      newMediaList = await recent!
           .getAssetListRange(start: range, end: range + pageSize[_axisIndex]);
     }
 
-    for (var asset in mediaList) {
+    for (var asset in newMediaList) {
       newMedia.add(AssetEntityImage(
         asset,
         fit: BoxFit.cover,
@@ -84,8 +86,9 @@ class _PhotosPageState extends State<PhotosPage> {
 
     setState(() {
       media.addAll(newMedia);
+      mediaList.addAll(newMediaList);
       newMedia.clear();
-      mediaList.clear();
+      newMediaList.clear();
       range = range + pageSize[_axisIndex];
       _getMediaLock = false;
     });
@@ -231,17 +234,31 @@ class _PhotosPageState extends State<PhotosPage> {
                       delegate: SliverChildBuilderDelegate(
                         addRepaintBoundaries: false,
                         (BuildContext context, int index) {
-                          return Container(
-                              margin: EdgeInsets.all(_margin),
-                              decoration: BoxDecoration(
-                                color: _fillColor,
-                                border: Border.all(
-                                  color: _borderColor,
-                                  width: _borderWidth,
-                                ),
-                              ),
-                              child:
-                                  (index < media.length) ? media[index] : null);
+                          return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ImagePage(
+                                        album: recent!,
+                                        imageIndex: index,
+                                        images: mediaList,
+                                        albumSize: totalMedia,
+                                      ),
+                                    ));
+                              },
+                              child: Container(
+                                  margin: EdgeInsets.all(_margin),
+                                  decoration: BoxDecoration(
+                                    color: _fillColor,
+                                    border: Border.all(
+                                      color: _borderColor,
+                                      width: _borderWidth,
+                                    ),
+                                  ),
+                                  child: (index < media.length)
+                                      ? media[index]
+                                      : null));
                         },
                         childCount: media.length,
                       ),

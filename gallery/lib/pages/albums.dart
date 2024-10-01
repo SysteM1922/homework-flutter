@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -28,6 +29,17 @@ class _AlbumsPageState extends State<AlbumsPage> {
   List<AssetPathEntity> albums = [];
   List<AssetEntityImage> albumCovers = [];
   List<int> albumSizes = [];
+
+  Future<void> _requestAssets() async {
+    final PermissionState ps = await PhotoManager.requestPermissionExtend();
+
+    if (!ps.isAuth) {
+      log('Permission is not granted');
+      exit(0);
+    }
+
+    _getMedia();
+  }
 
   final ScrollController _scrollController = ScrollController(
     keepScrollOffset: true,
@@ -66,7 +78,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
         albumCovers.add(AssetEntityImage(
           media[0],
           fit: BoxFit.cover,
-          isOriginal: true,
+          isOriginal: false,
         ));
         albumSizes.add(0);
       });
@@ -79,7 +91,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
   void initState() {
     super.initState();
 
-    _getMedia();
+    _requestAssets();
 
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
