@@ -8,9 +8,8 @@ import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 
 class AlbumPage extends StatefulWidget {
   final AssetPathEntity album;
-  final int albumSize;
 
-  const AlbumPage({super.key, required this.album, required this.albumSize});
+  const AlbumPage({super.key, required this.album});
 
   @override
   State<AlbumPage> createState() => _AlbumPageState();
@@ -41,11 +40,15 @@ class _AlbumPageState extends State<AlbumPage> {
 
   int totalMedia = 0;
 
-  AssetPathEntity album = AssetPathEntity(id: "none", name: "none");
+  AssetPathEntity get album => widget.album;
 
   bool _getMediaLock = false;
 
   double _cacheExtent = 2000.0;
+
+  void _getTotalAssets() async {
+    totalMedia = await album.assetCountAsync;
+  }
 
   void _getMedia() async {
     if (_getMediaLock) {
@@ -100,23 +103,25 @@ class _AlbumPageState extends State<AlbumPage> {
   void initState() {
     super.initState();
 
-    album = widget.album;
-    totalMedia = widget.albumSize;
-
     _getMedia();
+    _getTotalAssets();
 
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
           ScrollDirection.reverse) {
-        setState(() {
-          _pinned = false;
-        });
+        if (_pinned) {
+          setState(() {
+            _pinned = false;
+          });
+        }
         _getMedia();
       } else if (_scrollController.position.userScrollDirection ==
           ScrollDirection.forward) {
-        setState(() {
-          _pinned = true;
-        });
+        if (!_pinned) {
+          setState(() {
+            _pinned = true;
+          });
+        }
       }
     });
   }
@@ -173,6 +178,7 @@ class _AlbumPageState extends State<AlbumPage> {
         }
       });
     }
+    _getMedia();
   }
 
   @override
@@ -204,7 +210,7 @@ class _AlbumPageState extends State<AlbumPage> {
                     snap: false,
                     expandedHeight: _expandedHeight,
                     flexibleSpace: FlexibleSpaceBar(
-                      title: Text(album.name,
+                      title: Text(widget.album.name,
                           style: TextStyle(color: Colors.white)),
                       titlePadding: const EdgeInsets.only(bottom: 100.0),
                       centerTitle: true,

@@ -238,7 +238,6 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                       MaterialPageRoute(
                                           builder: (context) => AlbumPage(
                                                 album: albums[index],
-                                                albumSize: albumSizes[index],
                                               )));
                                 },
                                 child: Padding(
@@ -305,9 +304,8 @@ class _AlbumsPageState extends State<AlbumsPage> {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) => AlbumPage(
-                                              album: albums[index],
-                                              albumSize: albumSizes[index])));
+                                          builder: (context) =>
+                                              AlbumPage(album: albums[index])));
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(5.0),
