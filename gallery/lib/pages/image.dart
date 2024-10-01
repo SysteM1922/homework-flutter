@@ -53,7 +53,9 @@ class _ImagePageState extends State<ImagePage> {
 
     log("Trying to get media from ${index + 3} to ${min<int>(index + 4, albumSize)}");
 
-    if (index + 3 < images.length || index > albumSize - 2) {
+    if (index + 3 < images.length ||
+        index > albumSize - 2 ||
+        albumSize == images.length) {
       _getMediaLock = false;
       return;
     }
@@ -91,127 +93,115 @@ class _ImagePageState extends State<ImagePage> {
     double halfHeight = MediaQuery.of(context).size.height / 2;
 
     return GestureDetector(
-        onVerticalDragUpdate: (details) {
-          if (details.primaryDelta! < -10) {
-            setState(() {
-              _isHalfScreen = true;
-            });
-          } else if (details.primaryDelta! > 10) {
-            setState(() {
-              _isHalfScreen = false;
-            });
-          }
-        },
-        child: Scaffold(
-          backgroundColor: Colors.black,
-          body: Column(
-            children: [
-              Stack(children: [
-                Container(
-                  color: Colors.black,
-                  height: _isHalfScreen ? halfHeight : halfHeight * 2,
-                  child: PhotoViewGallery.builder(
-                      loadingBuilder: (context, event) => const Center(
-                            child:
-                                CircularProgressIndicator(color: Colors.white),
-                          ),
-                      itemCount: images.length,
-                      pageController:
-                          PageController(initialPage: widget.imageIndex),
-                      builder: (context, index) {
-                        return PhotoViewGalleryPageOptions(
-                          imageProvider:
-                              AssetEntityImageProvider(images[index]),
-                          initialScale: PhotoViewComputedScale.contained,
-                          basePosition: Alignment.center,
-                          minScale: PhotoViewComputedScale.contained,
-                          controller: _photoViewController,
-                          onTapDown: (context, details, controllerValue) {
-                            if (_isAppBarVisible) {
-                              SystemChrome.setEnabledSystemUIMode(
-                                  SystemUiMode.manual,
-                                  overlays: [SystemUiOverlay.top]);
-                            } else {
-                              SystemChrome.setEnabledSystemUIMode(
-                                  SystemUiMode.edgeToEdge);
-                            }
-                            setState(() {
-                              _isAppBarVisible = !_isAppBarVisible;
-                            });
-                          },
-                        );
-                      },
-                      scrollPhysics: const BouncingScrollPhysics(),
-                      onPageChanged: (index) {
-                        setState(() {});
-                        _getMedia(index);
-                      }),
-                ),
-                if (_isAppBarVisible)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: AppBar(
-                      iconTheme: const IconThemeData(color: Colors.white),
-                      backgroundColor: Colors.black.withOpacity(0.2),
-                    ),
-                  ),
-              ]),
-              if (_isHalfScreen)
-                Container(
-                  height: halfHeight,
-                  alignment: Alignment.topCenter,
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                  ),
-                  child: FractionallySizedBox(
-                    heightFactor: 0.5,
-                    child: Container(
-                      padding: const EdgeInsets.all(40.0),
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(20.0),
+      onVerticalDragUpdate: (details) {
+        if (details.primaryDelta! < -10) {
+          setState(() {
+            _isHalfScreen = true;
+          });
+        } else if (details.primaryDelta! > 10) {
+          setState(() {
+            _isHalfScreen = false;
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Column(children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                height: _isHalfScreen ? halfHeight : halfHeight * 2,
+                child: PhotoViewGallery.builder(
+                    loadingBuilder: (context, event) => const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
                         ),
-                      ),
-                      child: GestureDetector(
-                        onTap: () {
-                          log("Opening map");
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MapPage(marker: _center),
-                              ));
+                    itemCount: images.length,
+                    pageController:
+                        PageController(initialPage: widget.imageIndex),
+                    builder: (context, index) {
+                      return PhotoViewGalleryPageOptions(
+                        imageProvider: AssetEntityImageProvider(images[index]),
+                        initialScale: PhotoViewComputedScale.contained,
+                        basePosition: Alignment.center,
+                        minScale: PhotoViewComputedScale.contained,
+                        controller: _photoViewController,
+                        onTapDown: (context, details, controllerValue) {
+                          if (_isAppBarVisible) {
+                            SystemChrome.setEnabledSystemUIMode(
+                                SystemUiMode.manual,
+                                overlays: [SystemUiOverlay.top]);
+                          } else {
+                            SystemChrome.setEnabledSystemUIMode(
+                                SystemUiMode.edgeToEdge);
+                          }
+                          setState(() {
+                            _isAppBarVisible = !_isAppBarVisible;
+                          });
                         },
-                        child: ClipRRect(
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(20.0)),
-                            child: FlutterMap(
-                              options: MapOptions(
-                                initialZoom: 14.0,
-                                interactionOptions: const InteractionOptions(
-                                  flags: InteractiveFlag.none, 
-                                ),
-                                onTap: (tapPosition, point) {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => MapPage(marker: _center),
-                                      ));
-                                },
-                                initialCenter: _center,
+                      );
+                    },
+                    scrollPhysics: const BouncingScrollPhysics(),
+                    onPageChanged: (index) {
+                      setState(() {});
+                      _getMedia(index);
+                    }),
+              ),
+              Container(
+                height: _isHalfScreen ? halfHeight : 0,
+                alignment: Alignment.topCenter,
+                decoration: const BoxDecoration(
+                  color: Colors.black,
+                ),
+                child: FractionallySizedBox(
+                  heightFactor: 0.5,
+                  child: Container(
+                    margin: const EdgeInsets.all(40.0),
+                    decoration: const BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(20.0),
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onTap: () {
+                        log("Opening map");
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MapPage(marker: _center),
+                            ));
+                      },
+                      child: ClipRRect(
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(20.0)),
+                          child: FlutterMap(
+                            options: MapOptions(
+                              initialZoom: 14.0,
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.none,
                               ),
-                              children: <Widget>[
-                                TileLayer(
-                                  urlTemplate:
-                                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                  maxZoom: 19,
-                                  minZoom: 2,
-                                ),
-                                MarkerLayer(
-                                  markers: [
-                                    Marker(
+                              onTap: (tapPosition, point) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MapPage(marker: _center),
+                                    ));
+                              },
+                              initialCenter: _center,
+                            ),
+                            children: <Widget>[
+                              TileLayer(
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                maxZoom: 19,
+                                minZoom: 2,
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
                                       width: 80.0,
                                       point: _center,
                                       child: const Icon(
@@ -219,18 +209,29 @@ class _ImagePageState extends State<ImagePage> {
                                         color: Colors.red,
                                         size: 50.0,
                                       ),
-                                      alignment: Alignment(0.0, -2.0)
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            )),
-                      ),
+                                      alignment: Alignment(0.0, -2.0)),
+                                ],
+                              ),
+                            ],
+                          )),
                     ),
                   ),
                 ),
-            ],
-          ),
-        ));
+              ),
+            ]),
+            if (_isAppBarVisible)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: AppBar(
+                  iconTheme: const IconThemeData(color: Colors.white),
+                  backgroundColor: Colors.black.withOpacity(0.2),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -78,7 +78,7 @@ class _AlbumsPageState extends State<AlbumsPage> {
         albumCovers.add(AssetEntityImage(
           media[0],
           fit: BoxFit.cover,
-          isOriginal: false,
+          isOriginal: true,
         ));
         albumSizes.add(0);
       });
