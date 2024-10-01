@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:gallery/pages/map.dart';
 import 'package:latlong2/latlong.dart' as latlong2;
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
@@ -39,25 +40,9 @@ class _ImagePageState extends State<ImagePage> {
 
   bool _isHalfScreen = false;
 
-  bool _hasLocation = false;
-
-  latlong2.LatLng _center = latlong2.LatLng(38.7071, -9.13549);
+  final latlong2.LatLng _center = latlong2.LatLng(39.8239, -7.49189);
 
   final PhotoViewController _photoViewController = PhotoViewController();
-
-  void _updateLocation(AssetEntity asset) {
-    if (_isHalfScreen) {
-      if (asset.latitude != null) {
-        _hasLocation = true;
-        _center =
-            latlong2.LatLng(asset.latitude!, asset.longitude!);
-        setState(() {});
-      } else {
-        _hasLocation = false;
-        setState(() {});
-      }
-    }
-  }
 
   void _getMedia(index) async {
     if (_getMediaLock) {
@@ -158,6 +143,7 @@ class _ImagePageState extends State<ImagePage> {
                       },
                       scrollPhysics: const BouncingScrollPhysics(),
                       onPageChanged: (index) {
+                        setState(() {});
                         _getMedia(index);
                       }),
                 ),
@@ -189,46 +175,56 @@ class _ImagePageState extends State<ImagePage> {
                           Radius.circular(20.0),
                         ),
                       ),
-                      child: ClipRRect(
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(20.0)),
-                        child: _hasLocation
-                            ? FlutterMap(
-                                options: MapOptions(
-                                  initialZoom: 13.0,
-                                  interactionOptions: const InteractionOptions(
-                                    flags: InteractiveFlag.none,
-                                  ),
-                                  initialCenter: _center,
+                      child: GestureDetector(
+                        onTap: () {
+                          log("Opening map");
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MapPage(marker: _center),
+                              ));
+                        },
+                        child: ClipRRect(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(20.0)),
+                            child: FlutterMap(
+                              options: MapOptions(
+                                initialZoom: 14.0,
+                                interactionOptions: const InteractionOptions(
+                                  flags: InteractiveFlag.none, 
                                 ),
-                                children: <Widget>[
-                                  TileLayer(
-                                    urlTemplate:
-                                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                    maxZoom: 18,
-                                    minZoom: 2,
-                                  ),
-                                  MarkerLayer(
-                                    markers: [
-                                      Marker(
-                                        width: 80.0,
-                                        point: _center,
-                                        child: const Icon(
-                                          Icons.location_on,
-                                          color: Colors.red,
-                                          size: 50.0,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            : const Center(
-                                child: Text(
-                                  "No location data available",
-                                  style: TextStyle(color: Colors.white),
-                                ),
+                                onTap: (tapPosition, point) {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => MapPage(marker: _center),
+                                      ));
+                                },
+                                initialCenter: _center,
                               ),
+                              children: <Widget>[
+                                TileLayer(
+                                  urlTemplate:
+                                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  maxZoom: 19,
+                                  minZoom: 2,
+                                ),
+                                MarkerLayer(
+                                  markers: [
+                                    Marker(
+                                      width: 80.0,
+                                      point: _center,
+                                      child: const Icon(
+                                        Icons.location_on,
+                                        color: Colors.red,
+                                        size: 50.0,
+                                      ),
+                                      alignment: Alignment(0.0, -2.0)
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )),
                       ),
                     ),
                   ),
