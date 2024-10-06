@@ -2,7 +2,7 @@
 # Author: Guilherme Antunes - 103600
 
 ## Description
-The Gallery application was designed to clone some of the functionalities of the Samsung Gallery App. The main navigation is made using non-scrollable tabs and the subsequent pages use the Navigator widget to navigate between them. Some lists are used to display the albums and photos retrieved with the photo_manager dependency and photo_view is used to display and interact with each of the images displaying a mocked location for each photo using flutter_map. Either the albums page or any page with images can switch the amount of albums/images displayed in the page by pinching in or out the page with the fingers. The application works in both orientations.
+The Gallery application was designed to clone some of the functionalities of the Samsung Gallery app. The main navigation is made using non-scrollable tabs and the subsequent pages use the Navigator widget to navigate between them. Some lists are used to display the albums and photos retrieved with the photo_manager dependency and photo_view is used to display and interact with each of the images displaying a mocked location for each photo using flutter_map. Either the albums page or any page with images can switch the amount of albums/images displayed in the page by pinching in or out the page with the fingers. The application works in both orientations.
 
 ## Requirements
 - Flutter SDK
