@@ -1,16 +1,27 @@
-# gallery
+# CM Flutter Homework - Gallery
+# Author: Guilherme Antunes - 103600
 
-A new Flutter project.
+## Description
+The Gallery application was designed to clone some of the functionalities of the Samsung Gallery App. The main navigation is made using non-scrollable tabs and the subsequent pages use the Navigator widget to navigate between them. Some lists are used to display the albums and photos retrieved with the photo_manager dependency and photo_view is used to display and interact with each of the images displaying a mocked location for each photo using flutter_map. Either the albums page or any page with images can switch the amount of albums/images displayed in the page by pinching in or out the page with the fingers. The application works in both orientations.
 
-## Getting Started
+## Requirements
+- Flutter SDK
+- ```flutter doctor``` must run without issues
 
-This project is a starting point for a Flutter application.
+## Installation
+Before executing the project dependencies must be installed with
+```bash
+flutter pub get
+```
+## Running the Application
+The Gallery app was developed to run **only on android devices** so after you run the command ...
+```bash
+flutter run
+```
+... you **must select an android device**, real or emulated, which preferably has images and albums in memory, like a personal phone.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Building the APK
+To compile the project in order to build an apk file to be installed on an android the following command must be run.
+```bash
+flutter build apk
+```
